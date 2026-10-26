@@ -1,0 +1,9 @@
+# Sample schedule - two transactions that deadlock
+isolation: REPEATABLE READ
+T1: READ(A)
+T2: READ(B)
+T1: WRITE(A, 500)
+T2: WRITE(B, 300)
+T1: WRITE(B, 250)
+T2: WRITE(A, 100)
+T1: COMMIT

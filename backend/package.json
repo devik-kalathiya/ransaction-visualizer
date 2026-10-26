@@ -1,0 +1,22 @@
+{
+  "name": "txn-studio-backend",
+  "version": "1.0.0",
+  "description": "Backend API for TXN Studio - Transaction State & Lifecycle Simulator (DBMS Project 48)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node tests/run-tests.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "pdfkit": "^0.15.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0e14">
+
+    <title>Quiz Arena | TXN Studio</title>
+
+    <link rel="stylesheet" href="quiz.css">
+</head>
+
+<body>
+    <div id="particles-container" aria-hidden="true"></div>
+    <div id="particles-container"></div>
+
+    <!-- Navigation -->
+    <header class="topbar">
+        <a href="index.html" class="brand">
+            <span class="brand-icon">TX</span>
+            <span>TXN <span class="accent">STUDIO</span></span>
+        </a>
+
+        <nav>
+            <a href="index.html">Transaction Simulator</a>
+            <a href="quiz.html" class="active">Quiz Arena</a>
+            <a href="#exam-resources">Exam Resources</a>
+        </nav>
+        <button id="themeToggle" class="theme-toggle" type="button"
+        aria-label="Switch to light mode">
+    ☀️ Light mode
+        </button>
+    </header>
+
+    <main class="container">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="eyebrow">TXN STUDIO / LEARNING ARENA</div>
+
+            <h1>DBMS <span class="accent">Quiz Arena</span></h1>
+
+            <p>
+                Practise DBMS concepts with AI-generated questions and
+                previous-year questions from GATE CSE and other competitive
+                computer science examinations. Test your knowledge, track
+                your performance, and review your answers.
+            </p>
+
+            <div class="hero-stats">
+                <div>
+                    <strong>100</strong>
+                    <span>Maximum questions per quiz</span>
+                </div>
+
+                <div>
+                    <strong>AI + PYQ</strong>
+                    <span>Question sources</span>
+                </div>
+
+                <div>
+                    <strong>6</strong>
+                    <span>DBMS practice topics</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Setup -->
+        <section class="panel" id="quiz-setup">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Configure Your Quiz</h2>
+                    <p class="section-description">
+                        Choose your question source, topic, difficulty,
+                        and quiz length.
+                    </p>
+                </div>
+
+                <span class="status-badge">QUIZ SETUP</span>
+            </div>
+
+            <form id="quizForm">
+
+                <div class="form-grid">
+
+                    <!-- Question Source -->
+                    <div class="field">
+                        <label for="exam">Question Source</label>
+
+                        <select id="exam" name="exam">
+                            <option value="ai">
+                                AI-Generated Questions
+                            </option>
+
+                            <option value="gate">
+                                GATE CSE Previous-Year Questions
+                            </option>
+
+                            <option value="ugcnet">
+                                UGC NET Computer Science PYQs
+                            </option>
+
+                            <option value="mixed">
+                                Mixed: AI + Previous-Year Questions
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Topic -->
+                    <div class="field">
+                        <label for="topic">DBMS Topic</label>
+
+                        <select id="topic" name="topic">
+                            <option value="all">All DBMS Topics</option>
+                            <option value="transactions">Transactions</option>
+                            <option value="acid">ACID Properties</option>
+                            <option value="schedules">Schedules & Serializability</option>
+                            <option value="concurrency">Concurrency Control</option>
+                            <option value="recovery">Database Recovery</option>
+                            <option value="locks">Locks & Deadlocks</option>
+                        </select>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div class="field">
+                        <label for="difficulty">Difficulty</label>
+
+                        <select id="difficulty" name="difficulty">
+                            <option value="all">All Levels</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Question Count -->
+                    <div class="field">
+                        <label for="questionCount">Number of Questions</label>
+
+                        <select id="questionCount" name="questionCount">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="20">20 Questions</option>
+                            <option value="30">30 Questions</option>
+                            <option value="40">40 Questions</option>
+                            <option value="50">50 Questions</option>
+                            <option value="60">60 Questions</option>
+                            <option value="70">70 Questions</option>
+                            <option value="80">80 Questions</option>
+                            <option value="90">90 Questions</option>
+                            <option value="100">100 Questions</option>
+                        </select>
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="field">
+                        <label for="minutes">Time Limit</label>
+
+                        <select id="minutes" name="minutes">
+                            <option value="0">No Time Limit</option>
+                            <option value="5">5 Minutes</option>
+                            <option value="10" selected>10 Minutes</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="20">20 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                        </select>
+                    </div>
+
+                    <!-- Shuffle -->
+                    <div class="field">
+                        <label for="shuffle">Question Order</label>
+
+                        <select id="shuffle" name="shuffle">
+                            <option value="yes" selected>Shuffle Questions</option>
+                            <option value="no">Keep Generated Order</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="setup-note">
+                    <strong>Question source information:</strong>
+                    AI-generated questions are created dynamically.
+                    Previous-year questions must come from an actual
+                    examination paper or a verified question collection.
+                    Mixed practice combines the sources available in the
+                    application.
+                </div>
+
+                <button type="submit" class="primary-btn" id="startQuizBtn">
+                    Generate Quiz <span>→</span>
+                </button>
+
+                <div id="setupMessage" class="message" role="alert"></div>
+
+            </form>
+        </section>
+
+        <!-- Quiz Section -->
+        <section class="panel hidden" id="quizSection">
+
+            <div class="quiz-header">
+                <div>
+                    <div class="eyebrow">YOUR QUIZ IS IN PROGRESS</div>
+                    <h2 id="quizTitle">DBMS Practice Quiz</h2>
+
+                    <div class="question-meta">
+                        <span class="tag" id="sourceTag">AI-Generated</span>
+                        <span class="tag" id="topicTag">All Topics</span>
+                        <span class="tag" id="difficultyTag">All Levels</span>
+                    </div>
+                </div>
+
+                <div class="timer-box" id="timerBox">
+                    <span>TIME REMAINING</span>
+                    <strong id="timer">10:00</strong>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-info">
+                <span id="questionProgress">Question 1 of 10</span>
+                <span id="answeredCount">0 answered</span>
+            </div>
+
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- Question -->
+            <div id="questionContainer">
+
+                <div class="question-meta">
+                    <span class="tag topic-tag" id="questionTopic">
+                        Transactions
+                    </span>
+                    <span class="tag" id="questionDifficulty">
+                        Medium
+                    </span>
+                </div>
+
+                <h3 class="question-title" id="questionText">
+                    Your question will appear here.
+                </h3>
+
+                <div class="options" id="optionsContainer"></div>
+
+            </div>
+
+            <!-- Controls -->
+            <div class="quiz-controls">
+
+                <button type="button" class="secondary-btn" id="prevBtn">
+                    ← Previous
+                </button>
+
+                <button type="button" class="secondary-btn" id="nextBtn">
+                    Next →
+                </button>
+
+                <button type="button" class="submit-btn" id="submitBtn">
+                    Submit Quiz
+                </button>
+
+            </div>
+
+            <div id="quizMessage" class="message" role="alert"></div>
+
+        </section>
+
+        <!-- Results Section -->
+        <section class="panel hidden" id="resultSection">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">QUIZ COMPLETED</div>
+                    <h2>Your Performance</h2>
+                </div>
+
+                <span class="status-badge">RESULTS</span>
+            </div>
+
+            <div class="result-summary">
+
+                <div class="score-circle">
+                    <strong id="scorePercent">0%</strong>
+                    <span>Final Score</span>
+                </div>
+
+                <div>
+                    <h3 id="resultTitle">Quiz Completed</h3>
+
+                    <p class="result-message" id="resultMessage">
+                        Review your performance and answers below.
+                    </p>
+
+                    <div class="result-stats">
+
+                        <div>
+                            <span>Total Questions</span>
+                            <strong id="totalQuestions">0</strong>
+                        </div>
+
+                        <div>
+                            <span>Correct Answers</span>
+                            <strong id="correctAnswers">0</strong>
+                        </div>
+
+                        <div>
+                            <span>Incorrect Answers</span>
+                            <strong id="wrongAnswers">0</strong>
+                        </div>
+
+                        <div>
+                            <span>Unanswered</span>
+                            <strong id="unansweredCount">0</strong>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="result-actions">
+                <button type="button" class="primary-btn" id="reviewBtn">
+                    Review Answers
+                </button>
+
+                <button type="button" class="secondary-btn" id="retryBtn">
+                    Try Again
+                </button>
+
+                <button type="button" class="secondary-btn" id="newQuizBtn">
+                    Configure New Quiz
+                </button>
+            </div>
+
+            <!-- Answer Review -->
+            <div class="review-container hidden" id="reviewContainer">
+                <h3>Answer Review</h3>
+                <div id="reviewList"></div>
+            </div>
+
+        </section>
+
+        <!-- Exam Resources -->
+        <section class="panel" id="exam-resources">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">PREVIOUS-YEAR PAPERS</div>
+                    <h2>Competitive Exam Resources</h2>
+                </div>
+            </div>
+
+            <p class="section-description">
+                Access examination resources for authentic question papers
+                and answer keys. These resources are separate from the
+                dynamically generated AI quiz.
+            </p>
+
+            <div class="paper-list">
+
+                <!-- GATE -->
+                <article class="paper-card">
+
+                    <span class="paper-tag">GATE CSE</span>
+
+                    <h3>GATE Computer Science</h3>
+
+                    <p>
+                        Access GATE question papers and answer keys for
+                        practising DBMS, operating systems, algorithms,
+                        computer networks, and other CSE subjects.
+                    </p>
+
+                    <a
+                        href="https://gate2026.iitg.ac.in/download.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Official GATE Downloads ↗
+                    </a>
+
+                    <a
+                        href="https://gatecse.in/previous-year-gate-papers-and-official-keys/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Previous-Year Paper Archive ↗
+                    </a>
+
+                </article>
+
+                <!-- UGC NET -->
+                <article class="paper-card">
+
+                    <span class="paper-tag">UGC NET</span>
+
+                    <h3>Computer Science & Applications</h3>
+
+                    <p>
+                        Explore UGC NET examination information and available
+                        official question-paper and answer-key resources.
+                    </p>
+
+                    <a
+                        href="https://ugcnet.nta.nic.in/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        UGC NET Official Website ↗
+                    </a>
+
+                </article>
+
+                <!-- Mixed Practice -->
+                <article class="paper-card">
+
+                    <span class="paper-tag">PRACTICE</span>
+
+                    <h3>AI + Previous-Year Practice</h3>
+
+                    <p>
+                        Combine newly generated DBMS questions with
+                        authentic questions from the previous-year
+                        collections supported by the application.
+                    </p>
+
+                    <button
+                        type="button"
+                        class="text-btn"
+                        id="paperQuizBtn"
+                    >
+                        Start Mixed Practice →
+                    </button>
+
+                </article>
+
+                <!-- Transaction PYQ collection (PDF + links) -->
+                <article class="paper-card pdf-card" id="transaction-pyq">
+
+                    <span class="paper-tag">TRANSACTIONS PYQ</span>
+
+                    <h3>Previous Year Questions: Transaction (GATE CSE)</h3>
+
+                    <p>
+                        24 solved GATE questions (2010-2024) on ACID,
+                        schedules, serializability, locking and recovery,
+                        with answers and solutions. The same questions are
+                        available in the quiz under
+                        <em>GATE CSE Previous-Year Questions</em>.
+                    </p>
+
+                    <div class="pdf-actions">
+                        <button type="button" class="secondary-btn" id="pdfPreviewBtn"
+                                aria-expanded="false" aria-controls="pdfPreviewBox">
+                            👁 Preview PDF
+                        </button>
+
+                        <a class="pdf-download"
+                           href="resources/Transaction_PYQ_GATE_EduRev.pdf"
+                           download="Transaction_PYQ_GATE_EduRev.pdf">
+                            ⬇ Download PDF
+                        </a>
+
+                        <a class="pdf-open"
+                           href="resources/Transaction_PYQ_GATE_EduRev.pdf"
+                           target="_blank" rel="noopener noreferrer">
+                            Open in new tab ↗
+                        </a>
+                    </div>
+
+                    <div class="pdf-preview hidden" id="pdfPreviewBox" hidden>
+                        <iframe id="pdfPreviewFrame"
+                                title="Transaction previous-year questions PDF preview"
+                                data-src="resources/Transaction_PYQ_GATE_EduRev.pdf#view=FitH"
+                                loading="lazy"></iframe>
+                        <p class="pdf-fallback">
+                            Preview not showing? Use
+                            <a href="resources/Transaction_PYQ_GATE_EduRev.pdf"
+                               target="_blank" rel="noopener noreferrer">Open in new tab</a>
+                            or Download.
+                        </p>
+                    </div>
+
+                    <h4 class="link-heading">More transaction PYQ sources</h4>
+
+                    <div class="link-list">
+                        <a href="https://practicepaper.in/gate-cse/transaction"
+                           target="_blank" rel="noopener noreferrer">
+                            PracticePaper: GATE CSE Transaction ↗
+                        </a>
+                        <a href="https://www.scribd.com/document/911366901/Dbms-Gate-and-Net-Pyq"
+                           target="_blank" rel="noopener noreferrer">
+                            Scribd: DBMS GATE and NET PYQ ↗
+                        </a>
+                        <a href="https://gateoverflow.in/tag/transaction-and-concurrency"
+                           target="_blank" rel="noopener noreferrer">
+                            GATE Overflow: Transaction &amp; Concurrency ↗
+                        </a>
+                        <a href="https://freeatzeal.com/user/pyq/subject-wise/Database%20Management%20System%20%20(DBMS)/Transaction%20Management"
+                           target="_blank" rel="noopener noreferrer">
+                            FreeAtZeal: DBMS Transaction Management PYQ ↗
+                        </a>
+                    </div>
+
+                </article>
+
+            </div>
+
+            <p class="disclaimer">
+                <strong>Important:</strong>
+                AI-generated questions are practice questions and are not
+                official previous-year questions. GATE and UGC NET resources
+                link to external examination websites. The quiz can display
+                authentic PYQs only when the corresponding question data
+                has been added to and integrated with the backend.
+                Verify answers against official answer keys whenever available.
+            </p>
+
+        </section>
+
+    </main>
+    <!-- ===== DEVELOPED BY ===== -->
+<section class="developed-by">
+
+    <div class="developed-header">
+        <span class="section-label">TXN STUDIO - DATABRICKS TEAM</span>
+        <h2>Developed By</h2>
+        <p class="section-subtitle">
+            Designed and developed as a DBMS academic project
+        </p>
+    </div>
+
+    <div class="team-container">
+
+        <!-- Team Member 1 -->
+        <div class="team-member">
+            <div class="photo-wrapper">
+                <img src="image/devik.jpg" alt="Devik Kalathiya">
+            </div>
+
+            <h3>Devik Kalathiya</h3>
+            <p class="register-number">Register No: 25BCE1358</p>
+            <span class="member-role">Team Member</span>
+        </div>
+
+        <!-- Team Member 2 -->
+        <div class="team-member">
+            <div class="photo-wrapper">
+                <img src="image/teammate.jpg"
+                     alt="Varshith Reddy Sandugari">
+            </div>
+
+            <h3>Varshith Reddy Sandugari</h3>
+            <p class="register-number">Register No: 25BCE1389</p>
+            <span class="member-role">Team Member</span>
+        </div>
+
+    </div>
+
+    <!-- ===== GUIDED BY ===== -->
+    <div class="guided-by">
+
+        <div class="guided-header">
+            <span class="section-label">PROJECT GUIDANCE</span>
+            <h2>Guided By</h2>
+        </div>
+
+        <div class="guide-card">
+
+            <div class="guide-photo-wrapper">
+                <img src="image/sir.jpg"
+                     alt="Dr. Swaminathan A"
+                     class="guide-photo">
+            </div>
+
+            <div class="guide-info">
+                <h3>Dr. Swaminathan A</h3>
+                <p>Assistant Professor</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+    <!-- Footer -->
+    <footer class="container">
+        <span>TXN STUDIO · QUIZ ARENA</span>
+        <span>DBMS LEARNING & PRACTICE</span>
+    </footer>
+
+    <script src="quiz.js"></script>
+    <script src="theme.js"></script>
+    <script type="module" src="particles.js"></script>
+
+</body>
+</html>

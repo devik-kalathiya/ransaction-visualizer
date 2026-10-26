@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaction States &amp; Lifecycle Visualizer — TXN Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Decorative background (grid + soft glows). Purely visual. -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
+  <div class="app-shell">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">TXN<span>Studio</span></div>
+          <div class="brand-sub">DBMS lab simulator by Team DATABRICKS</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="simulator">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 11l10-4M7 13l10 4"/></svg></span>Simulator
+        </button>
+        <button class="nav-item" data-view="timeline">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Timeline
+        </button>
+        <button class="nav-item" data-view="locks">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>Lock manager
+        </button>
+        <button class="nav-item" data-view="rules">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></span>Transition rules
+        </button>
+        <button class="nav-item" data-view="acid">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg></span>ACID properties
+        </button>
+        <button class="nav-item" data-view="ask">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="2.4"/></svg></span>Ask AI
+        </button>
+        <button class="nav-item" data-view="history">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>History
+        </button>
+        <a class="nav-item" href="dbms-info.html">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/><path d="M4 5v14"/></svg></span>DBMS concepts
+        </a>
+        <a class="nav-item" href="quiz.html">
+          Quiz Arena
+        </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="shortcut-card">
+          <div class="side-label">Keyboard shortcuts</div>
+          <div class="shortcut"><kbd>Space</kbd><span>Next state</span></div>
+          <div class="shortcut"><kbd>F</kbd><span>Inject failure</span></div>
+          <div class="shortcut"><kbd>R</kbd><span>Reset</span></div>
+        </div>
+        <div class="connection-card">
+          <div class="connection-top"><span class="live-dot" id="liveDot"></span><span id="connectionText">Checking backend…</span></div>
+          <div class="connection-detail" id="connectionDetail">Connecting to API layer</div>
+        </div>
+        <div class="version">TXN Studio v2.1 — academic build</div>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+
+      <!-- Header -->
+      <header class="topbar">
+        <div class="title-block">
+          <div class="title-logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+            <span class="logo-pulse"></span>
+          </div>
+          <div>
+            <h1>Transaction States &amp; Lifecycle Visualizer</h1>
+            <p class="subtitle">Interactive visualization of DBMS transaction state transitions by team codebricks</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="hero-metrics">
+            <div class="metric"><span>Transaction</span><strong id="heroTxn">TXN-001</strong></div>
+            <div class="metric"><span>State</span><strong id="heroState">NEW</strong></div>
+            <div class="metric"><span>Mode</span><strong id="heroMode">SUCCESS</strong></div>
+          </div>
+          <div class="clock" id="clock">00:00:00</div>
+          <button class="icon-btn" id="themeBtn" title="Toggle light / dark theme" aria-label="Toggle theme"></button>
+          <button class="help-btn" id="helpBtn">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg>
+            How it works
+          </button>
+        </div>
+      </header>
+
+      <!-- ===================== SIMULATOR VIEW ===================== -->
+      <section id="simulatorView" class="view active-view">
+
+        <!-- HERO: lifecycle state machine -->
+        <div class="panel lifecycle-panel" id="lifecyclePanel">
+          <div class="panel-head lifecycle-head">
+            <div>
+              <h2>Transaction lifecycle map</h2>
+              <p class="panel-hint">Follow the transaction token as it moves. Hover or click any state to learn about it.</p>
+            </div>
+
+            <!-- Control buttons (same IDs as before) -->
+            <div class="control-actions">
+              <button class="btn primary" id="startBtn" data-tip="Play the lifecycle automatically">
+                <svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg><span id="startLabel">Start</span>
+              </button>
+              <button class="btn" id="nextBtn" data-tip="Move one state forward (Space)">
+                <svg viewBox="0 0 24 24"><path d="M5 4v16l10-8z"/><path d="M19 5v14"/></svg>Next state
+              </button>
+              <button class="btn" id="pauseBtn" data-tip="Pause automatic playback">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>Pause
+              </button>
+              <button class="btn danger" id="failBtn" data-tip="Only valid before COMMITTED (F)">
+                <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Inject failure
+              </button>
+              <button class="btn ghost" id="resetBtn" data-tip="Create a fresh transaction (R)">
+                <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset
+              </button>
+              <button class="btn ghost" id="explainBtn" data-tip="Ask the AI to explain this state">
+                <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="2.4"/></svg>AI explain
+              </button>
+              <button class="btn ghost" id="exportPdfBtn" data-tip="Download a PDF report from the backend">
+                <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg>PDF
+              </button>
+              <button class="btn ghost" id="exportJsonBtn" data-tip="Download a JSON report from the backend">
+                <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg>JSON
+              </button>
+            </div>
+          </div>
+
+          <div class="ai-panel hidden" id="aiPanel">
+            <div class="ai-panel-head">
+              <span class="side-label">AI explanation</span>
+              <span class="badge" id="aiSourceBadge">—</span>
+            </div>
+            <p id="aiPanelText">Press "AI explain" to get a plain-language explanation of the current state.</p>
+            <button class="text-btn" id="askMoreBtn">Ask a follow-up in Ask AI →</button>
+          </div>
+
+          <!-- The stage is drawn at a fixed 1100×440 size and scaled by JS to fit -->
+          <div class="stage-wrap" id="stageWrap">
+            <div class="stage-sizer" id="stageSizer">
+              <div class="stage" id="stage">
+
+                <svg class="connections" width="1100" height="440" viewBox="0 0 1100 440">
+                  <defs>
+                    <marker id="arrowIdle" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                    <marker id="arrowNext" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                    <marker id="arrowFail" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                    <marker id="arrowDone" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                    <marker id="arrowDoneFail" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                  </defs>
+
+                  <!-- Each edge: data-edge="FROM>TO". The token travels along the path. -->
+                  <g class="edge-group" data-edge="NEW>ACTIVE">
+                    <path class="edge" d="M180 110 H258"/>
+                    <text class="edge-label" x="219" y="99" text-anchor="middle">begin</text>
+                  </g>
+                  <g class="edge-group" data-edge="ACTIVE>PARTIALLY COMMITTED">
+                    <path class="edge" d="M420 110 H498"/>
+                    <text class="edge-label" x="459" y="99" text-anchor="middle">last stmt</text>
+                  </g>
+                  <g class="edge-group" data-edge="PARTIALLY COMMITTED>COMMITTED">
+                    <path class="edge" d="M660 110 H738"/>
+                    <text class="edge-label" x="699" y="99" text-anchor="middle">commit</text>
+                  </g>
+                  <g class="edge-group" data-edge="COMMITTED>TERMINATED">
+                    <path class="edge" d="M900 110 C962 110 1000 128 1000 182"/>
+                    <text class="edge-label" x="948" y="99" text-anchor="middle">end</text>
+                  </g>
+                  <g class="edge-group fail" data-edge="ACTIVE>FAILED">
+                    <path class="edge" d="M340 156 V230 Q340 250 360 250 H400 Q420 250 420 270 V292"/>
+                    <text class="edge-label" x="331" y="206" text-anchor="end">error</text>
+                  </g>
+                  <g class="edge-group fail" data-edge="PARTIALLY COMMITTED>FAILED">
+                    <path class="edge" d="M580 156 V230 Q580 250 560 250 H520 Q500 250 500 270 V292"/>
+                    <text class="edge-label" x="589" y="206" text-anchor="start">failure</text>
+                  </g>
+                  <g class="edge-group fail" data-edge="FAILED>ABORTED">
+                    <path class="edge" d="M540 340 H678"/>
+                    <text class="edge-label" x="609" y="329" text-anchor="middle">rollback</text>
+                  </g>
+                  <g class="edge-group" data-edge="ABORTED>TERMINATED">
+                    <path class="edge" d="M840 340 H960 Q1000 340 1000 300 V278"/>
+                    <text class="edge-label" x="905" y="329" text-anchor="middle">release</text>
+                  </g>
+                </svg>
+
+                <div class="lane-label lane-success">Normal execution path</div>
+                <div class="lane-label lane-failure">Failure &amp; recovery path</div>
+
+                <!-- Decorative + educational: the recovery log used by both commit and rollback -->
+                <div class="log-disk" id="logDisk">
+                  <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+                  <span>Recovery log</span>
+                  <small id="diskNote">stable storage</small>
+                </div>
+
+                <!-- State nodes. --x / --y = centre position on the 1100×440 stage -->
+                <div class="node" data-state="NEW" style="--x:100;--y:110" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span><span class="node-index">01</span></div>
+                  <div class="node-title">NEW</div><div class="node-sub">Created</div>
+                  <span class="node-check">✓</span>
+                </div>
+                <div class="node" data-state="ACTIVE" style="--x:340;--y:110" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><span class="node-index">02</span></div>
+                  <div class="node-title">ACTIVE</div><div class="node-sub">Executing R/W ops</div>
+                  <span class="node-check">✓</span>
+                </div>
+                <div class="node" data-state="PARTIALLY COMMITTED" style="--x:580;--y:110" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg></span><span class="node-index">03</span></div>
+                  <div class="node-title">PARTIALLY COMMITTED</div><div class="node-sub">Final statement done</div>
+                  <span class="node-check">✓</span>
+                </div>
+                <div class="node" data-state="COMMITTED" style="--x:820;--y:110" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span><span class="node-index">04</span></div>
+                  <div class="node-title">COMMITTED</div><div class="node-sub">Changes durable</div>
+                  <span class="node-check">✓</span>
+                </div>
+                <div class="node" data-state="FAILED" style="--x:460;--y:340" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="node-index">05</span></div>
+                  <div class="node-title">FAILED</div><div class="node-sub">Error detected</div>
+                  <span class="node-check">!</span>
+                </div>
+                <div class="node" data-state="ABORTED" style="--x:760;--y:340" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span><span class="node-index">06</span></div>
+                  <div class="node-title">ABORTED</div><div class="node-sub">Rolled back</div>
+                  <span class="node-check">↩</span>
+                </div>
+                <div class="node" data-state="TERMINATED" style="--x:1000;--y:230" tabindex="0">
+                  <div class="node-top"><span class="node-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></span><span class="node-index">07</span></div>
+                  <div class="node-title">TERMINATED</div><div class="node-sub">Resources released</div>
+                  <span class="node-check">✓</span>
+                </div>
+
+                <!-- The moving transaction token -->
+                <div class="txn-token" id="txnToken"><span class="token-dot"></span><span id="tokenLabel">TXN-001</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend + state information panel -->
+          <div class="lifecycle-foot">
+            <div class="legend">
+              <span><i class="legend-dot current"></i>Current state</span>
+              <span><i class="legend-dot done"></i>Visited</span>
+              <span><i class="legend-line next"></i>Possible next</span>
+              <span><i class="legend-line fail"></i>Failure path</span>
+            </div>
+            <div class="inspector" id="inspector" data-state="NEW">
+              <div class="inspector-icon" id="inspectorIcon"></div>
+              <div class="inspector-body">
+                <div class="inspector-top"><b id="inspectorName">NEW</b><span id="inspectorTag">Current state</span></div>
+                <p id="inspectorDesc"></p>
+                <div class="inspector-flow" id="inspectorFlow"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ IMPORT INPUT FILE (new input method) ============ -->
+        <div class="panel import-panel" id="importPanel">
+          <div class="panel-head">
+            <div>
+              <h2>Import input file</h2>
+              <p class="panel-hint">Upload a transaction schedule instead of typing it. The operation list, lifecycle and lock table all follow the file.</p>
+            </div>
+            <span class="badge" id="importBadge">NO FILE</span>
+          </div>
+
+          <div class="import-body">
+            <label class="dropzone" id="dropZone" tabindex="0" for="fileInput">
+              <input type="file" id="fileInput" hidden
+                accept=".csv,.tsv,.json,.xlsx,.xls,.docx,.txt,.sql,.md,.jpg,.jpeg,.png,.webp,.bmp,.gif" />
+              <svg viewBox="0 0 24 24" class="dz-icon"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              <div class="dz-title">Drop a file here, or click to browse</div>
+              <div class="dz-types">
+                <span>DOCX</span><span>CSV</span><span>JSON</span><span>XLSX</span><span>JPEG / PNG</span><span>TXT / SQL</span>
+              </div>
+            </label>
+
+            <div class="import-side">
+              <div class="side-label">Expected content</div>
+              <pre class="import-example">T1: READ(A)
+T1: WRITE(A, 500)
+T2: READ(A)
+T1: COMMIT</pre>
+              <p class="import-tip">Tables with Txn / Operation / Item columns, JSON, or a grid with one column per transaction also work. Images are read with OCR.</p>
+              <div class="import-links">
+                <button class="text-btn" id="togglePaste" type="button">Paste text instead</button>
+                <span>Samples:</span>
+                <a class="text-btn" href="samples/sample.csv" download>CSV</a>
+                <a class="text-btn" href="samples/sample.json" download>JSON</a>
+                <a class="text-btn" href="samples/sample.xlsx" download>XLSX</a>
+                <a class="text-btn" href="samples/sample.docx" download>DOCX</a>
+                <a class="text-btn" href="samples/sample.png" download>PNG</a>
+                <a class="text-btn" href="samples/sample.txt" download>TXT</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="paste-box hidden" id="pasteBox">
+            <textarea id="pasteText" rows="5" spellcheck="false" placeholder="T1: READ(A)&#10;T2: WRITE(A, 7)&#10;T1: WRITE(B, 3)&#10;T1: COMMIT"></textarea>
+            <button class="btn primary" id="parsePasteBtn" type="button">Use this text</button>
+          </div>
+
+          <div class="import-status hidden" id="importStatus" role="status"></div>
+
+          <div class="import-result hidden" id="importResult">
+            <div class="import-summary" id="importSummary"></div>
+
+            <div class="import-pick">
+              <label>
+                <span>Transaction to simulate</span>
+                <select id="importTxnSelect"></select>
+              </label>
+              <div class="import-actions">
+                <button class="btn" id="importLockViewBtn" type="button">Replay all in Lock manager</button>
+                <button class="btn ghost" id="importClearBtn" type="button">Remove file</button>
+              </div>
+            </div>
+
+            <div class="import-notes hidden" id="importNotes"></div>
+
+            <details class="import-ocr hidden" id="ocrBox" open>
+              <summary>Recognized text (fix any OCR mistakes, then press Re-read)</summary>
+              <textarea id="ocrText" rows="6" spellcheck="false"></textarea>
+              <button class="btn" id="ocrReparseBtn" type="button">Re-read this text</button>
+            </details>
+
+            <div class="import-preview" id="importPreview"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: configuration, live status, transition guide -->
+        <div class="control-grid">
+          <div class="panel control-panel">
+            <div class="panel-head">
+              <div><h2>Configure simulation</h2><p class="panel-hint">Set these before pressing Start.</p></div>
+            </div>
+            <div class="form-grid">
+              <label>
+                <span>Transaction ID</span>
+                <input id="txnId" value="TXN-001" maxlength="20" />
+              </label>
+              <label>
+                <span>Operation</span>
+                <select id="operation">
+                  <option>UPDATE Account</option>
+                  <option>READ Student</option>
+                  <option>INSERT Order</option>
+                  <option>DELETE Record</option>
+                  <option>Mixed Operations</option>
+                </select>
+              </label>
+              <label>
+                <span>Isolation level</span>
+                <select id="isolation">
+                  <option>READ COMMITTED</option>
+                  <option>READ UNCOMMITTED</option>
+                  <option>REPEATABLE READ</option>
+                  <option>SERIALIZABLE</option>
+                </select>
+              </label>
+              <label>
+                <span>Scenario</span>
+                <select id="scenario">
+                  <option value="success">Successful transaction</option>
+                  <option value="failure">Failure &amp; rollback</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel status-panel" id="statusPanel" data-state="NEW">
+            <div class="panel-head">
+              <div><h2>Current transaction</h2></div>
+              <span class="badge" id="runBadge">READY</span>
+            </div>
+            <div class="status-body">
+              <div class="state-orbit" id="stateOrbit">
+                <div class="orbit-ring"></div>
+                <div class="state-symbol" id="stateSymbol"></div>
+              </div>
+              <div class="status-main">
+                <div class="current-state-name" id="currentName">NEW</div>
+                <p id="currentDesc">Transaction has been created and is ready to begin execution.</p>
+              </div>
+            </div>
+            <dl class="status-rows">
+              <div><dt>Transaction</dt><dd id="statusTxn">TXN-001</dd></div>
+              <div><dt>Last action</dt><dd id="statusAction">—</dd></div>
+              <div><dt>Operation</dt><dd id="statusOp">—</dd></div>
+              <div><dt>Isolation</dt><dd id="statusIso">—</dd></div>
+            </dl>
+            <div class="progress-block">
+              <div class="progress-meta"><span>Lifecycle progress</span><strong id="progressText">0%</strong></div>
+              <div class="mini-progress"><span id="progressBar"></span></div>
+            </div>
+          </div>
+
+          <div class="panel next-panel">
+            <div class="panel-head"><div><h2>What happens next?</h2></div></div>
+            <div class="next-body">
+              <div class="next-state" id="nextState">ACTIVE</div>
+              <p id="nextDesc">The transaction begins executing its read/write operations. An error may send it to FAILED.</p>
+              <div class="next-alt" id="nextAlt"></div>
+              <div class="transition-rule"><span>Allowed transition</span><b id="transitionCode">NEW → ACTIVE</b></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: operations + activity log -->
+        <div class="lower-grid">
+          <div class="panel operations-panel">
+            <div class="panel-head">
+              <div><h2>Transaction operations</h2><p class="panel-hint">Operation buffer</p></div>
+              <span class="badge blue" id="opCount">4 OPS</span>
+            </div>
+            <div class="operation-list" id="operationList">
+              <div class="op-row"><span class="op-num">01</span><code>READ(A)</code><span class="op-status pending">PENDING</span></div>
+              <div class="op-row"><span class="op-num">02</span><code>WRITE(A, 500)</code><span class="op-status pending">PENDING</span></div>
+              <div class="op-row"><span class="op-num">03</span><code>READ(B)</code><span class="op-status pending">PENDING</span></div>
+              <div class="op-row"><span class="op-num">04</span><code>WRITE(B, 300)</code><span class="op-status pending">PENDING</span></div>
+            </div>
+          </div>
+
+          <div class="panel log-panel">
+            <div class="panel-head">
+              <div><h2>Activity log</h2><p class="panel-hint">Live event stream, newest at the bottom</p></div>
+              <button class="text-btn" id="clearLog">Clear</button>
+            </div>
+            <div class="log-list" id="logList"></div>
+          </div>
+        </div>
+
+        <!-- ============ LOCKS HELD BY THIS TRANSACTION ============ -->
+        <div class="panel lock-panel" id="lockPanel">
+          <div class="panel-head">
+            <div>
+              <h2>Locks held by this transaction</h2>
+              <p class="panel-hint" id="lockHint">Follows the lifecycle above. Strict two-phase locking: locks are acquired while ACTIVE and released at TERMINATED.</p>
+            </div>
+            <div class="lock-head-right">
+              <span class="badge" id="lockPhaseBadge">NOT STARTED</span>
+              <button class="text-btn" id="openLockView" type="button">Multi-transaction view →</button>
+            </div>
+          </div>
+          <div class="lock-body">
+            <div class="lock-table" id="lockTable"></div>
+            <div class="lock-side">
+              <div class="phase-bar" id="phaseBar">
+                <div class="phase-step" data-i="0"><i></i><span>Growing</span></div>
+                <div class="phase-step" data-i="1"><i></i><span>Lock point</span></div>
+                <div class="phase-step" data-i="2"><i></i><span>Shrinking</span></div>
+              </div>
+              <p class="phase-note" id="phaseNote"></p>
+              <div class="lock-rule" id="lockRule"></div>
+              <div class="lock-warn hidden" id="lockWarn"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TIMELINE VIEW ===================== -->
+      <section id="timelineView" class="view">
+        <div class="page-title"><h2>Transaction timeline</h2><p>A chronological trace of the simulated transaction.</p></div>
+        <div class="panel timeline-panel">
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
+
+      <!-- ===================== LOCK MANAGER VIEW ===================== -->
+      <section id="locksView" class="view">
+        <div class="page-title"><h2>Lock manager</h2><p>Replay a whole schedule under strict two-phase locking: who holds which lock, who has to wait, and when a deadlock appears.</p></div>
+
+        <div class="panel lv-panel">
+          <div class="panel-head">
+            <div><h2 id="lvTitle">Schedule replay</h2><p class="panel-hint" id="lvSource">—</p></div>
+            <div class="control-actions">
+              <button class="btn" id="lvPrev" type="button">Back</button>
+              <button class="btn primary" id="lvPlay" type="button"><svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg><span id="lvPlayLabel">Play</span></button>
+              <button class="btn" id="lvNext" type="button">Next</button>
+              <button class="btn ghost" id="lvReset" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="lv-summary" id="lvSummary"></div>
+          <div class="lv-explain" id="lvExplain"></div>
+          <div class="lv-grid">
+            <div class="lv-col">
+              <h3>Schedule</h3>
+              <div class="lv-schedule" id="lvSchedule"></div>
+            </div>
+            <div class="lv-col">
+              <h3>Lock table</h3>
+              <div class="lv-locks" id="lvLocks"></div>
+              <h3>Wait-for graph</h3>
+              <div class="lv-graph" id="lvGraph"></div>
+            </div>
+          </div>
+          <h3 class="lv-log-title">Events <small>(click one to jump to it)</small></h3>
+          <div class="lv-log" id="lvLog"></div>
+        </div>
+
+        <div class="rules-grid lv-rules">
+          <div class="rule-card"><span>S</span><h3>Shared lock</h3><p>Taken by reads. Many transactions may hold S on the same item at once.</p></div>
+          <div class="rule-card error-rule"><span>X</span><h3>Exclusive lock</h3><p>Taken by writes, inserts and deletes. Nobody else may hold any lock on that item.</p></div>
+          <div class="rule-card"><span>2PL</span><h3>Two-phase locking</h3><p>Acquire locks while growing, then release them while shrinking. Never acquire after releasing.</p></div>
+          <div class="rule-card error-rule"><span>DL</span><h3>Deadlock</h3><p>A cycle in the wait-for graph. The DBMS aborts one victim so the others can continue.</p></div>
+        </div>
+      </section>
+
+      <!-- ===================== RULES VIEW ===================== -->
+      <section id="rulesView" class="view">
+        <div class="page-title"><h2>State transition rules</h2><p>The only transitions the DBMS allows. Every arrow on the lifecycle map is one of these.</p></div>
+        <div class="rules-grid">
+          <div class="rule-card"><span>01</span><h3>NEW → ACTIVE</h3><p>A newly created transaction begins execution.</p></div>
+          <div class="rule-card"><span>02</span><h3>ACTIVE → PARTIALLY COMMITTED</h3><p>The final statement has executed successfully, but the commit is not yet durable.</p></div>
+          <div class="rule-card"><span>03</span><h3>PARTIALLY COMMITTED → COMMITTED</h3><p>The commit record is written to stable storage and the changes become permanent.</p></div>
+          <div class="rule-card"><span>04</span><h3>COMMITTED → TERMINATED</h3><p>The completed transaction leaves the system and releases its locks.</p></div>
+          <div class="rule-card error-rule"><span>05</span><h3>ACTIVE → FAILED</h3><p>An error, deadlock, crash, or other condition prevents normal execution.</p></div>
+          <div class="rule-card error-rule"><span>06</span><h3>PARTIALLY COMMITTED → FAILED</h3><p>A failure occurs before the commit became durable, so the transaction cannot commit.</p></div>
+          <div class="rule-card error-rule"><span>07</span><h3>FAILED → ABORTED</h3><p>The DBMS rolls back the transaction using the log and restores consistency.</p></div>
+          <div class="rule-card"><span>08</span><h3>ABORTED → TERMINATED</h3><p>Resources are released; the transaction may later be restarted or killed.</p></div>
+        </div>
+      </section>
+
+      <!-- ===================== ACID VIEW ===================== -->
+      <section id="acidView" class="view">
+        <div class="page-title"><h2>ACID properties</h2><p>Why transaction management is essential for reliable databases.</p></div>
+        <div class="acid-grid">
+          <div class="acid-card"><div class="acid-letter">A</div><h3>Atomicity</h3><p>A transaction is treated as one unit. Either all required operations succeed, or the DBMS rolls them back.</p><div class="acid-link">Seen in: FAILED → ABORTED</div></div>
+          <div class="acid-card"><div class="acid-letter">C</div><h3>Consistency</h3><p>A successful transaction takes the database from one valid state to another valid state.</p><div class="acid-link">Seen in: COMMITTED</div></div>
+          <div class="acid-card"><div class="acid-letter">I</div><h3>Isolation</h3><p>Concurrent transactions should behave as if their conflicting operations were appropriately controlled.</p><div class="acid-link">Seen in: isolation level setting</div></div>
+          <div class="acid-card"><div class="acid-letter">D</div><h3>Durability</h3><p>Once a transaction commits, its changes survive subsequent failures.</p><div class="acid-link">Seen in: PARTIALLY COMMITTED → COMMITTED</div></div>
+        </div>
+      </section>
+
+      <!-- ===================== HISTORY VIEW ===================== -->
+      <section id="historyView" class="view">
+        <div class="page-title"><h2>Transaction history</h2><p>Every run is saved by the backend (SQLite). Export any past run as a report.</p></div>
+        <div class="panel history-panel">
+          <div class="panel-head">
+            <div><h2>Recent transactions</h2><p class="panel-hint">Backend records</p></div>
+            <button class="text-btn" id="refreshHistory">Refresh</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <p class="history-empty">No backend connection yet, or no transactions recorded.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ASK AI VIEW ===================== -->
+      <section id="askView" class="view">
+        <div class="page-title"><h2>Ask AI anything</h2><p>Ask about the current transaction, isolation levels, ACID, deadlocks — any DBMS question.</p></div>
+        <div class="panel ask-panel">
+          <div class="panel-head">
+            <div><h2>Q&amp;A with the AI tutor</h2><p class="panel-hint" id="askContext">Context: no transaction yet.</p></div>
+            <div class="ask-head-right">
+              <span class="badge" id="askModeBadge">—</span>
+              <button class="text-btn" id="clearAsk">Clear</button>
+            </div>
+          </div>
+
+          <div class="ask-thread" id="askThread">
+            <p class="ask-empty">No questions yet. Pick a suggestion below or type your own.</p>
+          </div>
+
+          <div class="ask-suggestions" id="askSuggestions">
+            <button class="chip-btn" data-q="Why does this transaction need to pass through PARTIALLY COMMITTED before COMMITTED?">Why PARTIALLY COMMITTED first?</button>
+            <button class="chip-btn" data-q="What is the difference between READ COMMITTED and SERIALIZABLE?">READ COMMITTED vs SERIALIZABLE?</button>
+            <button class="chip-btn" data-q="What is a dirty read and which isolation levels allow it?">What is a dirty read?</button>
+            <button class="chip-btn" data-q="How does the DBMS use the transaction log to roll back an aborted transaction?">How does rollback work?</button>
+          </div>
+
+          <div class="ask-input-row">
+            <input id="askInput" type="text" maxlength="500" placeholder="Ask a question about this transaction or any DBMS concept…" />
+            <button class="btn primary" id="askSendBtn">Ask</button>
+          </div>
+        </div>
+      </section>
+
+      <footer>TXN Studio — Transaction State &amp; Lifecycle Visualizer — DBMS academic project</footer>
+    </main>
+  </div>
+
+  <!-- Toast notifications appear here -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- Help modal -->
+  <div class="modal hidden" id="helpModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeHelp" aria-label="Close">×</button>
+      <h2>How to demonstrate the project</h2>
+      <ol>
+        <li>Choose a transaction operation and isolation level.</li>
+        <li>Press <b>Start</b> to watch the successful lifecycle.</li>
+        <li>Use <b>Next state</b> (or Space) to explain each DBMS state manually.</li>
+        <li>Select <b>Failure &amp; rollback</b> or press <b>Inject failure</b> before the commit.</li>
+        <li>Observe FAILED → ABORTED and the operation rollback.</li>
+        <li>Hover any state on the map for a short explanation.</li>
+        <li>Press <b>AI explain</b> for a per-state explanation, or open <b>Ask AI</b> to ask anything.</li>
+        <li>Export a PDF/JSON report, and use Timeline, Transition rules, ACID properties and History from the sidebar during your viva.</li>
+      </ol>
+      <div class="modal-note">The backend persists every run to SQLite and powers AI explain, Ask AI and report export. Without it, the simulator still runs locally in offline mode.</div>
+    </div>
+  </div>
+  <!-- ===================== DEVELOPED BY ===================== -->
+  <section class="developed-by">
+
+    <div class="developed-header">
+      <span class="section-label">TXN STUDIO - DATABRICKS TEAM</span>
+      <h2>Developed By</h2>
+      <p class="section-subtitle">
+        Designed and developed as a DBMS academic project
+      </p>
+    </div>
+
+    <div class="team-container">
+
+      <!-- Team Member 1 -->
+      <div class="team-member">
+        <div class="photo-wrapper">
+          <img src="image/devik.jpg" alt="Devik Kalathiya">
+        </div>
+
+        <h3>Devik Kalathiya</h3>
+        <p class="register-number">Register No: 25BCE1358</p>
+        <span class="member-role">Team Member</span>
+      </div>
+
+
+      <!-- Team Member 2 -->
+      <div class="team-member">
+        <div class="photo-wrapper">
+          <img src="image/teammate.jpg" alt="Teammate Name">
+        </div>
+
+        <h3>Varshith Reddy Sandugari</h3>
+        <p class="register-number">Register No: 25BCE1389</p>
+        <span class="member-role">Team Member</span>
+      </div>
+
+    </div>
+
+
+    <!-- ===================== GUIDED BY ===================== -->
+    <div class="guided-by">
+
+      <div class="guided-header">
+        <span class="section-label">PROJECT GUIDANCE</span>
+        <h2>Guided By</h2>
+      </div>
+
+      <div class="guide-card">
+
+        <div class="guide-photo-wrapper">
+          <img
+            src="image/sir.jpg"
+            alt="Dr. Swaminathan A"
+            class="guide-photo"
+          >
+        </div>
+
+        <div class="guide-info">
+          <h3>Dr. Swaminathan A</h3>
+          <p>Assistant Professor</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+  <!-- ===================== SCRIPTS ===================== -->
+  <script src="api-client.js"></script>
+  <script src="input-parser.js"></script>
+  <script src="lock-manager.js"></script>
+  <script src="script.js"></script>
+  <script src="lock-ui.js"></script>
+  <script src="input-import.js"></script>
+    <!-- Your quiz webpage HTML content -->
+  <script type="module" src="./particles.js"></script>
+  <script src="./script.js" defer></script>
+</body>
+</html>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "isolation": "REPEATABLE READ",
+  "transactions": [
+    {
+      "id": "T1",
+      "operations": [
+        "READ(A)",
+        "WRITE(A, 500)",
+        "WRITE(B, 250)",
+        "COMMIT"
+      ]
+    },
+    {
+      "id": "T2",
+      "operations": [
+        {
+          "op": "READ",
+          "item": "B"
+        },
+        {
+          "op": "WRITE",
+          "item": "B",
+          "value": 300
+        },
+        {
+          "op": "WRITE",
+          "item": "A",
+          "value": 100
+        }
+      ]
+    }
+  ]
+}

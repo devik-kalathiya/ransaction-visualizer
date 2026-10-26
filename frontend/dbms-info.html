@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TXN Studio — DBMS Transactions</title>
+  <link rel="stylesheet" href="dbms-info.css">
+</head>
+
+<body>
+    <div id="particles-container" class="particles-container"></div>
+  <div class="page-shell">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div>
+          <div class="brand-name">
+            TXN<span>Studio</span>
+          </div>
+
+          <div class="brand-sub">
+            DBMS KNOWLEDGE BASE
+          </div>
+        </div>
+      </div>
+      <a href="index.html" class="back-btn">
+        ← Transaction Visualizer
+      </a>
+
+    </header>
+
+
+    <div class="layout">
+
+      <aside class="sidebar">
+
+        <div class="sidebar-title">
+          DBMS TOPICS
+        </div>
+
+        <a href="#introduction">01 · Transactions</a>
+        <a href="#states">02 · Transaction States</a>
+        <a href="#acid">03 · ACID Properties</a>
+        <a href="#schedules">04 · Schedules</a>
+        <a href="#serializability">05 · Serializability</a>
+        <a href="#problems">06 · Concurrency Problems</a>
+        <a href="#isolation">07 · Isolation Levels</a>
+        <a href="#locking">08 · Locking & 2PL</a>
+        <a href="#deadlock">09 · Deadlocks</a>
+        <a href="#recovery">10 · Recovery</a>
+        <a href="#recoverability">11 · Recoverability</a>
+        <a href="#videos">12 · Videos</a>
+        <a href="#references">13 · References</a>
+
+      </aside>
+
+
+      <main class="content">
+
+        <section class="hero">
+
+          <div class="eyebrow">
+            DATABASE MANAGEMENT SYSTEMS
+          </div>
+
+          <h1>
+            Transactions & Concurrency Control
+          </h1>
+
+          <p>
+            A detailed guide to how database systems execute,
+            isolate, synchronize, commit, rollback and recover
+            transactions.
+          </p>
+
+        </section>
+
+
+        <!-- TRANSACTION -->
+
+        <section class="topic" id="introduction">
+
+          <div class="topic-number">01</div>
+
+          <h2>What is a Transaction?</h2>
+
+          <p>
+            A transaction is a logical unit of database work consisting
+            of one or more operations. A transaction normally contains
+            read and write operations and eventually reaches either
+            COMMIT or ROLLBACK.
+          </p>
+
+          <div class="concept-grid">
+
+            <div class="concept-card">
+              <h3>READ</h3>
+              <p>
+                Retrieves data from the database.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>WRITE</h3>
+              <p>
+                Modifies database data.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>COMMIT</h3>
+              <p>
+                Permanently makes successful changes durable.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>ROLLBACK</h3>
+              <p>
+                Undoes changes made by a failed transaction.
+              </p>
+            </div>
+
+          </div>
+
+          <div class="example-box">
+
+            <div class="example-title">
+              Example — Bank Transfer
+            </div>
+
+            <pre>
+T1:
+    READ(A)
+    A = A - 100
+    WRITE(A)
+
+    READ(B)
+    B = B + 100
+    WRITE(B)
+
+    COMMIT
+            </pre>
+
+            <p>
+              A transfer should behave as one logical operation.
+              If the transaction fails after deducting money from A
+              but before crediting B, the database must be able to
+              undo the partial work.
+            </p>
+
+          </div>
+
+        </section>
+
+
+        <!-- STATES -->
+
+        <section class="topic" id="states">
+
+          <div class="topic-number">02</div>
+
+          <h2>Transaction States</h2>
+
+          <p>
+            A transaction moves through a sequence of states during
+            execution. The standard model distinguishes active,
+            partially committed, committed and failed/aborted states.
+          </p>
+
+          <div class="state-flow">
+
+            <div class="state-node">NEW</div>
+            <span>→</span>
+
+            <div class="state-node active">ACTIVE</div>
+            <span>→</span>
+
+            <div class="state-node">PARTIALLY<br>COMMITTED</div>
+            <span>→</span>
+
+            <div class="state-node success">COMMITTED</div>
+            <span>→</span>
+
+            <div class="state-node">TERMINATED</div>
+
+          </div>
+
+          <div class="state-flow failure">
+
+            <div class="state-node active">ACTIVE</div>
+            <span>→</span>
+
+            <div class="state-node danger">FAILED</div>
+            <span>→</span>
+
+            <div class="state-node danger">ABORTED</div>
+            <span>→</span>
+
+            <div class="state-node">TERMINATED</div>
+
+          </div>
+
+          <div class="definition-list">
+
+            <div>
+              <strong>NEW</strong>
+              <p>
+                The transaction has been created but execution has
+                not started.
+              </p>
+            </div>
+
+            <div>
+              <strong>ACTIVE</strong>
+              <p>
+                The transaction is executing its read/write operations.
+              </p>
+            </div>
+
+            <div>
+              <strong>PARTIALLY COMMITTED</strong>
+              <p>
+                The final statement has executed, but the commit is
+                not yet guaranteed durable.
+              </p>
+            </div>
+
+            <div>
+              <strong>COMMITTED</strong>
+              <p>
+                The transaction has successfully completed and its
+                effects are durable.
+              </p>
+            </div>
+
+            <div>
+              <strong>FAILED</strong>
+              <p>
+                An error or system condition prevents normal completion.
+              </p>
+            </div>
+
+            <div>
+              <strong>ABORTED</strong>
+              <p>
+                The transaction has been rolled back.
+              </p>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ACID -->
+
+        <section class="topic" id="acid">
+
+          <div class="topic-number">03</div>
+
+          <h2>ACID Properties</h2>
+
+          <p>
+            ACID describes the fundamental guarantees expected from
+            reliable transaction processing.
+          </p>
+
+          <div class="acid-grid">
+
+            <article>
+              <div class="acid-letter">A</div>
+              <h3>Atomicity</h3>
+              <p>
+                A transaction is treated as one indivisible unit.
+                Either all required operations succeed or the database
+                rolls back the transaction's effects.
+              </p>
+            </article>
+
+            <article>
+              <div class="acid-letter">C</div>
+              <h3>Consistency</h3>
+              <p>
+                A successful transaction preserves database constraints
+                and moves the database from one valid state to another.
+              </p>
+            </article>
+
+            <article>
+              <div class="acid-letter">I</div>
+              <h3>Isolation</h3>
+              <p>
+                Concurrent transactions should not expose intermediate
+                states in ways that violate the selected isolation model.
+              </p>
+            </article>
+
+            <article>
+              <div class="acid-letter">D</div>
+              <h3>Durability</h3>
+              <p>
+                After successful commit, the effects of the transaction
+                must survive subsequent failures.
+              </p>
+            </article>
+
+          </div>
+
+        </section>
+
+
+        <!-- SCHEDULES -->
+
+        <section class="topic" id="schedules">
+
+          <div class="topic-number">04</div>
+
+          <h2>Schedules</h2>
+
+          <p>
+            A schedule represents the order in which operations from
+            multiple transactions are executed.
+          </p>
+
+          <h3>Serial Schedule</h3>
+
+          <pre class="schedule">
+T1: R(A) W(A) COMMIT
+T2:              R(B) W(B) COMMIT
+          </pre>
+
+          <p>
+            T1 completes before T2 starts. There is no interleaving.
+          </p>
+
+          <h3>Non-Serial Schedule</h3>
+
+          <pre class="schedule">
+T1: R(A)       W(A)
+T2:       R(A)       W(B)
+T1:                    COMMIT
+T2:                         COMMIT
+          </pre>
+
+          <p>
+            Operations from multiple transactions are interleaved.
+            This improves concurrency but introduces consistency concerns.
+          </p>
+
+        </section>
+
+
+        <!-- SERIALIZABILITY -->
+
+        <section class="topic" id="serializability">
+
+          <div class="topic-number">05</div>
+
+          <h2>Serializability</h2>
+
+          <p>
+            Serializability is a correctness criterion for concurrent
+            schedules. A concurrent schedule is serializable when its
+            effect is equivalent to an appropriate serial execution.
+          </p>
+
+          <h3>Conflict Operations</h3>
+
+          <p>
+            Two operations conflict when they belong to different
+            transactions, access the same data item, and at least one
+            operation is a write.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Operation 1</th>
+                <th>Operation 2</th>
+                <th>Conflict?</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>R1(A)</td>
+                <td>R2(A)</td>
+                <td>No</td>
+              </tr>
+
+              <tr>
+                <td>R1(A)</td>
+                <td>W2(A)</td>
+                <td>Yes</td>
+              </tr>
+
+              <tr>
+                <td>W1(A)</td>
+                <td>R2(A)</td>
+                <td>Yes</td>
+              </tr>
+
+              <tr>
+                <td>W1(A)</td>
+                <td>W2(A)</td>
+                <td>Yes</td>
+              </tr>
+
+            </tbody>
+          </table>
+
+          <h3>Precedence Graph</h3>
+
+          <p>
+            A precedence graph represents ordering constraints between
+            transactions. A directed cycle indicates that the schedule
+            is not conflict-serializable.
+          </p>
+
+          <div class="graph-example">
+
+            <div class="graph-node">T1</div>
+
+            <div class="arrow">──────→</div>
+
+            <div class="graph-node">T2</div>
+
+          </div>
+
+        </section>
+
+
+        <!-- PROBLEMS -->
+
+        <section class="topic" id="problems">
+
+          <div class="topic-number">06</div>
+
+          <h2>Concurrency Problems</h2>
+
+          <div class="problem-card">
+
+            <h3>Dirty Read</h3>
+
+            <p>
+              T2 reads a value written by T1 before T1 commits.
+              If T1 subsequently rolls back, T2 has read data that
+              never became part of the committed database state.
+            </p>
+
+            <pre>
+                  T1: WRITE(A = 500)
+                  T2: READ(A = 500)
+                  T1: ROLLBACK
+            </pre>
+
+          </div>
+
+          <div class="problem-card">
+
+            <h3>Non-Repeatable Read</h3>
+
+            <p>
+              A transaction reads the same row twice and obtains
+              different committed values because another transaction
+              modified the row between the two reads.
+            </p>
+
+          </div>
+
+          <div class="problem-card">
+
+            <h3>Phantom Read</h3>
+
+            <p>
+              A transaction executes the same predicate query twice
+              and the second execution returns additional or missing
+              rows because another transaction inserted or deleted
+              qualifying rows.
+            </p>
+
+          </div>
+
+          <div class="problem-card">
+
+            <h3>Lost Update</h3>
+
+            <p>
+              Two transactions read the same value and subsequently
+              write based on that stale value. One update can overwrite
+              the other's result.
+            </p>
+
+          </div>
+
+        </section>
+
+
+        <!-- ISOLATION -->
+
+        <section class="topic" id="isolation">
+
+          <div class="topic-number">07</div>
+
+          <h2>Transaction Isolation Levels</h2>
+
+          <p>
+            Isolation levels define what effects one concurrent
+            transaction can observe from another. The SQL standard
+            describes four commonly discussed levels and the phenomena
+            they permit or prevent. :contentReference[oaicite:1]{index=1}
+          </p>
+
+          <table class="isolation-table">
+
+            <thead>
+              <tr>
+                <th>Isolation Level</th>
+                <th>Dirty Read</th>
+                <th>Non-Repeatable Read</th>
+                <th>Phantom Read</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>READ UNCOMMITTED</td>
+                <td class="possible">Possible</td>
+                <td class="possible">Possible</td>
+                <td class="possible">Possible</td>
+              </tr>
+
+              <tr>
+                <td>READ COMMITTED</td>
+                <td class="prevented">Prevented</td>
+                <td class="possible">Possible</td>
+                <td class="possible">Possible</td>
+              </tr>
+
+              <tr>
+                <td>REPEATABLE READ</td>
+                <td class="prevented">Prevented</td>
+                <td class="prevented">Prevented</td>
+                <td class="possible">Possible</td>
+              </tr>
+
+              <tr>
+                <td>SERIALIZABLE</td>
+                <td class="prevented">Prevented</td>
+                <td class="prevented">Prevented</td>
+                <td class="prevented">Prevented</td>
+              </tr>
+
+            </tbody>
+
+          </table>
+
+          <div class="warning-box">
+            <strong>Important:</strong>
+            Isolation behavior can differ between DBMS implementations.
+            For example, Oracle documents READ COMMITTED and SERIALIZABLE
+            as its primary transaction isolation modes and uses
+            multiversion read consistency. :contentReference[oaicite:2]{index=2}
+          </div>
+
+        </section>
+
+
+        <!-- LOCKING -->
+
+        <section class="topic" id="locking">
+
+          <div class="topic-number">08</div>
+
+          <h2>Locking & Two-Phase Locking</h2>
+
+          <p>
+            Locks coordinate concurrent access to shared database
+            resources. A DBMS can use locks to prevent destructive
+            interactions between transactions. :contentReference[oaicite:3]{index=3}
+          </p>
+
+          <div class="lock-grid">
+
+            <div class="concept-card">
+
+              <h3>Shared Lock — S</h3>
+
+              <p>
+                Used for reading. Multiple transactions can generally
+                hold compatible shared locks on the same resource.
+              </p>
+
+            </div>
+
+            <div class="concept-card">
+
+              <h3>Exclusive Lock — X</h3>
+
+              <p>
+                Used when a transaction needs to modify a resource.
+                Conflicting transactions must wait or otherwise be
+                prevented from accessing the resource according to
+                the locking protocol.
+              </p>
+
+            </div>
+
+          </div>
+
+          <h3>Two-Phase Locking — 2PL</h3>
+
+          <div class="two-phase">
+
+            <div>
+              <span>PHASE 1</span>
+              <strong>Growing Phase</strong>
+              <p>
+                Locks may be acquired, but not released.
+              </p>
+            </div>
+
+            <div>
+              <span>PHASE 2</span>
+              <strong>Shrinking Phase</strong>
+              <p>
+                Locks may be released, but new locks cannot be acquired.
+              </p>
+            </div>
+
+          </div>
+
+          <p>
+            Strict variants of locking protocols impose additional
+            restrictions on when write locks can be released, which
+            helps simplify recovery and prevents certain cascading
+            effects.
+          </p>
+
+        </section>
+
+
+        <!-- DEADLOCK -->
+
+        <section class="topic" id="deadlock">
+
+          <div class="topic-number">09</div>
+
+          <h2>Deadlocks</h2>
+
+          <p>
+            A deadlock occurs when transactions wait indefinitely for
+            resources held by one another.
+          </p>
+
+          <div class="deadlock-box">
+
+            <div class="deadlock-node">
+              T1<br>
+              <small>holds A</small>
+            </div>
+
+            <div class="deadlock-arrow">
+              waits for B →
+            </div>
+
+            <div class="deadlock-node">
+              T2<br>
+              <small>holds B</small>
+            </div>
+
+            <div class="deadlock-arrow">
+              waits for A →
+            </div>
+
+            <div class="deadlock-node">
+              T1
+            </div>
+
+          </div>
+
+          <h3>Deadlock Handling</h3>
+
+          <ul>
+            <li>Deadlock prevention</li>
+            <li>Deadlock avoidance</li>
+            <li>Deadlock detection</li>
+            <li>Transaction rollback and recovery</li>
+          </ul>
+
+          <h3>Wait-For Graph</h3>
+
+          <p>
+            A wait-for graph represents which transaction is waiting
+            for another transaction. A cycle in the graph is evidence
+            of a deadlock under the corresponding locking model.
+          </p>
+
+        </section>
+
+
+        <!-- RECOVERY -->
+
+        <section class="topic" id="recovery">
+
+          <div class="topic-number">10</div>
+
+          <h2>Transaction Recovery</h2>
+
+          <p>
+            Recovery mechanisms restore the database to a consistent
+            state after transaction failures, system crashes or other
+            interruptions.
+          </p>
+
+          <div class="recovery-flow">
+
+            <div>FAILURE</div>
+            <span>→</span>
+            <div>DETECT</div>
+            <span>→</span>
+            <div>UNDO / REDO</div>
+            <span>→</span>
+            <div>CONSISTENT STATE</div>
+
+          </div>
+
+          <h3>Log-Based Recovery</h3>
+
+          <p>
+            A recovery log records information that allows the system
+            to reconstruct or reverse database changes.
+          </p>
+
+          <h3>UNDO</h3>
+
+          <p>
+            Reverses effects of transactions that should not remain
+            in the database.
+          </p>
+
+          <h3>REDO</h3>
+
+          <p>
+            Reapplies effects that should be reflected in the durable
+            database state.
+          </p>
+
+          <h3>Write-Ahead Logging</h3>
+
+          <p>
+            Write-ahead logging requires the relevant log record to be
+            written to stable storage before the corresponding database
+            change is treated as safely persisted.
+          </p>
+
+          <h3>Checkpoint</h3>
+
+          <p>
+            A checkpoint records a recovery point so that recovery
+            does not necessarily have to process the entire history
+            of the database log.
+          </p>
+
+        </section>
+
+
+        <!-- RECOVERABILITY -->
+
+        <section class="topic" id="recoverability">
+
+          <div class="topic-number">11</div>
+
+          <h2>Recoverability</h2>
+
+          <div class="concept-grid">
+
+            <div class="concept-card">
+              <h3>Recoverable Schedule</h3>
+              <p>
+                A transaction that reads data written by another
+                transaction does not commit before the transaction
+                it depends on commits.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>Cascading Rollback</h3>
+              <p>
+                A transaction failure causes other transactions that
+                consumed its uncommitted data to roll back.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>Cascadeless Schedule</h3>
+              <p>
+                Transactions only read data written by transactions
+                that have already committed.
+              </p>
+            </div>
+
+            <div class="concept-card">
+              <h3>Strict Schedule</h3>
+              <p>
+                Data written by a transaction cannot be read or
+                overwritten by another transaction until the first
+                transaction commits or aborts.
+              </p>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- VIDEOS -->
+
+        <section class="topic" id="videos">
+
+          <div class="topic-number">12</div>
+
+          <h2>Video Tutorials</h2>
+
+          <p>
+            These videos cover DBMS transaction concepts rather than
+            the TXN Studio project itself.
+          </p>
+
+          <div class="video-grid">
+
+            <article class="video-card">
+
+              <div class="video-wrapper">
+                <iframe
+                  src="https://www.youtube.com/embed/ZvJwq2VX9X4"
+                  title="Transaction Processing in DBMS"
+                  allowfullscreen>
+                </iframe>
+              </div>
+
+              <h3>
+                Transaction Processing in DBMS
+              </h3>
+
+              <p>
+                Covers transactions, ACID, transaction states,
+                schedules, serializability, concurrency,
+                recovery and deadlocks.
+              </p>
+
+            </article>
+
+
+            <article class="video-card">
+
+              <div class="video-wrapper">
+                <iframe
+                  src="https://www.youtube.com/embed/yax-QhQFz80"
+                  title="Transaction States in DBMS"
+                  allowfullscreen>
+                </iframe>
+              </div>
+
+              <h3>
+                Transaction States
+              </h3>
+
+              <p>
+                A focused tutorial on transaction states and the
+                broader transaction-processing unit.
+              </p>
+
+            </article>
+
+          </div>
+
+        </section>
+
+
+        <!-- REFERENCES -->
+
+        <section class="topic" id="references">
+
+          <div class="topic-number">13</div>
+
+          <h2>References</h2>
+
+          <div class="reference-list">
+
+            <a
+              href="https://docs.oracle.com/en/database/oracle/oracle-database/18/cncpt/data-concurrency-and-consistency.html"
+              target="_blank">
+              Oracle Database — Data Concurrency and Consistency
+            </a>
+
+            <a
+              href="https://docs.oracle.com/en/database/oracle/oracle-database/26/adfns/sql-processing-for-application-developers.html"
+              target="_blank">
+              Oracle — READ COMMITTED and SERIALIZABLE
+            </a>
+
+            <a
+              href="https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Manual-Data-Locking.html"
+              target="_blank">
+              Oracle — Manual Data Locking
+            </a>
+
+            <a
+              href="https://www.youtube.com/watch?v=ZvJwq2VX9X4"
+              target="_blank">
+              YouTube — Transaction Processing in DBMS
+            </a>
+
+            <a
+              href="https://www.youtube.com/watch?v=yax-QhQFz80"
+              target="_blank">
+              YouTube — Transaction States in DBMS
+            </a>
+
+          </div>
+
+        </section>
+
+
+        <footer>
+          TXN Studio · DBMS Transaction Knowledge Base
+        </footer>
+
+      </main>
+
+    </div>
+
+  </div>
+  <!-- ===================== DEVELOPED BY ===================== -->
+  <section class="developed-by">
+
+    <div class="developed-header">
+      <span class="section-label">TXN STUDIO TEAM</span>
+      <h2>Developed By</h2>
+      <p class="section-subtitle">
+        Designed and developed as a DBMS academic project
+      </p>
+    </div>
+
+    <div class="team-container">
+
+      <!-- Team Member 1 -->
+      <div class="team-member">
+        <div class="photo-wrapper">
+          <img src="image/devik.jpg" alt="Devik Kalathiya">
+        </div>
+
+        <h3>Devik Kalathiya</h3>
+        <p class="register-number">Register No: 25BCE1358</p>
+        <span class="member-role">Team Member</span>
+      </div>
+
+
+      <!-- Team Member 2 -->
+      <div class="team-member">
+        <div class="photo-wrapper">
+          <img src="image/teammate.jpg" alt="Teammate Name">
+        </div>
+
+        <h3>Varshith Reddy Sandugari</h3>
+        <p class="register-number">Register No: 25BCE1389</p>
+        <span class="member-role">Team Member</span>
+      </div>
+
+    </div>
+
+
+    <!-- ===================== GUIDED BY ===================== -->
+    <div class="guided-by">
+
+      <div class="guided-header">
+        <span class="section-label">PROJECT GUIDANCE</span>
+        <h2>Guided By</h2>
+      </div>
+
+      <div class="guide-card">
+
+        <div class="guide-photo-wrapper">
+          <img
+            src="image/sir.jpg"
+            alt="Dr. Swaminathan A"
+            class="guide-photo"
+          >
+        </div>
+
+        <div class="guide-info">
+          <h3>Dr. Swaminathan A</h3>
+          <p>Assistant Professor</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <script src="dbms-info.js"></script>
+  <script src="theme.js"></script>
+  <script type="module" src="particles.js"></script>
+
+</body>
+</html>
